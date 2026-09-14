@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DFX 能力架构全景图 / DFT-大数据观测 架构 0 层图</title>
+<style>
+  :root {
+    --bg: #f4f6fa;
+    --panel: #ffffff;
+    --ink: #1b2537;
+    --ink-sub: #5b6880;
+    --line: #dde3ed;
+    --shadow: 0 1px 2px rgba(27, 37, 55, .06), 0 8px 24px rgba(27, 37, 55, .06);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Noto Sans CJK SC", system-ui, sans-serif;
+    line-height: 1.6;
+  }
+
+  header {
+    background: linear-gradient(135deg, #16223c 0%, #24406e 100%);
+    color: #fff;
+    padding: 28px 32px 22px;
+  }
+
+  header h1 { margin: 0; font-size: 22px; letter-spacing: .5px; }
+
+  header p { margin: 6px 0 0; font-size: 13px; color: #b9c6dd; }
+
+  .tabs { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+
+  .tab {
+    border: 1px solid rgba(255, 255, 255, .28);
+    background: rgba(255, 255, 255, .08);
+    color: #dce5f5;
+    padding: 7px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .tab:hover { background: rgba(255, 255, 255, .16); }
+
+  .tab[aria-selected="true"] { background: #fff; color: #16223c; border-color: #fff; font-weight: 600; }
+
+  main { padding: 24px 32px 56px; max-width: 1560px; margin: 0 auto; }
+
+  .diagram-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
+
+  .diagram-head h2 { margin: 0; font-size: 18px; }
+
+  .diagram-head .desc { margin: 4px 0 0; font-size: 13px; color: var(--ink-sub); }
+
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink-sub); }
+
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+  .layer {
+    display: grid;
+    grid-template-columns: 116px 1fr;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .layer-label {
+    padding: 16px 12px;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    text-align: center;
+  }
+
+  .layer-label b { font-size: 14px; font-weight: 600; }
+
+  .layer-label small { font-size: 11px; opacity: .82; line-height: 1.4; }
+
+  .layer-body {
+    padding: 14px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(216px, 1fr));
+    gap: 10px;
+  }
+
+  .group {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #fcfdff;
+    transition: box-shadow .15s, transform .15s;
+  }
+
+  .group:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+
+  .group h3 { margin: 0 0 8px; font-size: 13.5px; font-weight: 600; }
+
+  .group ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .group li {
+    font-size: 12px;
+    color: var(--ink-sub);
+    background: #eef2f9;
+    border-radius: 5px;
+    padding: 3px 8px;
+    white-space: nowrap;
+  }
+
+  .flow {
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-sub);
+    margin: 0 0 12px;
+  }
+
+  footer { padding: 0 32px 40px; max-width: 1560px; margin: 0 auto; font-size: 12px; color: var(--ink-sub); }
+
+  footer a { color: #2c5cc5; }
+
+  @media print {
+    header { background: #16223c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tabs { display: none; }
+    .layer { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>DFX 能力架构全景图 / DFT-大数据观测 架构 0 层图</h1>
+  <p>分层能力视图，自下而上为底座支撑到用户消费；同层内为并列能力域。</p>
+  <div class="tabs" role="tablist" id="tabs"></div>
+</header>
+
+<main>
+  <div class="diagram-head">
+    <div>
+      <h2 id="diagram-title"></h2>
+      <p class="desc" id="diagram-desc"></p>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+  <p class="flow" id="flow"></p>
+  <div id="canvas"></div>
+</main>
+
+<footer>
+  <p>内容基线：DFX 技术方案 - DFX 能力架构全景图、DFT-大数据观测 - 架构 0 层图（飞书文档）。</p>
+  <p>修改方式：编辑本文件中的 <code>DIAGRAMS</code> 数据结构即可，渲染逻辑无需改动。</p>
+</footer>
+
+<script>
+const DIAGRAMS = {
+  dfx: {
+    tab: 'DFX 能力架构全景图',
+    title: 'DFX 能力架构全景图',
+    desc: '以 DFX 能力域为核心，向上承接角色与业务场景，向下依托平台工具、数据底座与技术底座。',
+    flow: '技术底座 → 数据底座 → 平台与工具 → DFX 能力域 → 用户与场景',
+    layers: [
+      {
+        name: '用户与场景层',
+        note: '谁在用，用在哪',
+        color: '#2f4f8f',
+        groups: [
+          { name: '业务场景', items: ['核心交易', '数据服务', 'AI / 模型', '报表 BI', '对外开放能力'] },
+          { name: '使用角色', items: ['研发', '测试 QA', 'SRE / 运维', '数据开发', '架构师', '管理者'] },
+          { name: '消费入口', items: ['能力门户', '健康度大盘', '评审卡点', '开放 API'] }
+        ]
+      },
+      {
+        name: 'DFX 能力域',
+        note: '面向 X 的设计能力',
+        color: '#2a6fd6',
+        groups: [
+          { name: 'DFR 可靠性', items: ['容错设计', '冗余与降级', '重试幂等', '故障注入'] },
+          { name: 'DFA 可用性', items: ['SLA / SLO', '多活容灾', '限流熔断', '应急预案'] },
+          { name: 'DFT 可测试性', items: ['环境与数据', '契约与接口测试', '可回归', '观测探针'] },
+          { name: 'DFO 可观测性', items: ['指标', '日志', '链路', '事件', '性能剖析'] },
+          { name: 'DFM 可维护性', items: ['配置化', '版本与回滚', '文档与知识', '自愈'] },
+          { name: 'DFS 可服务性', items: ['问题定位', '诊断工具', '远程运维', '工单闭环'] },
+          { name: 'DFSec 安全合规', items: ['权限鉴权', '数据分级', '审计', '脱敏'] },
+          { name: 'DFP 性能效率', items: ['容量模型', '压测', '瓶颈分析', '调优基线'] },
+          { name: 'DFC 成本', items: ['资源画像', '成本归因', '闲置治理', '预算管控'] },
+          { name: 'DFD 可交付性', items: ['CI / CD', '灰度发布', '变更管控', '环境一致性'] }
+        ]
+      },
+      {
+        name: '平台与工具层',
+        note: '能力落地载体',
+        color: '#158a8a',
+        groups: [
+          { name: '度量与评估', items: ['成熟度模型', '健康分', '红线指标', '评审卡点'] },
+          { name: '风险与防控', items: ['风险库', '变更风控', '预案演练', '混沌工程'] },
+          { name: '观测与告警', items: ['统一观测平台', '告警中枢', '值班协同', '故障复盘'] },
+          { name: '质量与测试', items: ['用例资产', '自动化回归', '数据构造', '环境治理'] },
+          { name: '容量与压测', items: ['全链路压测', '容量规划', '弹性伸缩'] },
+          { name: '应急与自愈', items: ['预案编排', '一键止损', '自动扩缩', '自愈策略'] }
+        ]
+      },
+      {
+        name: '数据底座层',
+        note: '能力的事实依据',
+        color: '#6b4fbb',
+        groups: [
+          { name: '观测数据', items: ['Metrics', 'Logs', 'Traces', 'Events', 'Profiles'] },
+          { name: '资产元数据', items: ['服务与任务台账', 'CMDB', '血缘', '依赖拓扑'] },
+          { name: '过程数据', items: ['缺陷', '故障', '变更', '值班', '复盘'] },
+          { name: '规范与知识', items: ['标准规范', '最佳实践', '检查项库'] }
+        ]
+      },
+      {
+        name: '技术底座层',
+        note: '统一基础设施',
+        color: '#5c6879',
+        groups: [
+          { name: '采集与传输', items: ['Agent / SDK', '消息总线', '统一网关'] },
+          { name: '存储与计算', items: ['时序库', '日志库', 'OLAP', '离线 / 实时计算'] },
+          { name: '调度与编排', items: ['工作流调度', '任务编排', '资源调度'] },
+          { name: '安全与运行环境', items: ['统一权限', '多云 / 混合部署', '租户隔离'] }
+        ]
+      }
+    ],
+    legend: [
+      { color: '#2f4f8f', text: '用户与场景' },
+      { color: '#2a6fd6', text: 'DFX 能力域' },
+      { color: '#158a8a', text: '平台与工具' },
+      { color: '#6b4fbb', text: '数据底座' },
+      { color: '#5c6879', text: '技术底座' }
+    ]
+  },
+
+  dft: {
+    tab: 'DFT-大数据观测 架构 0 层图',
+    title: 'DFT-大数据观测 架构 0 层图',
+    desc: '从大数据运行对象采集观测数据，经统一建模、存储、分析后，输出到任务、质量、时效、成本等观测应用。',
+    flow: '观测对象 → 采集与接入 → 存储 → 分析与计算 → 观测应用 → 消费',
+    layers: [
+      {
+        name: '观测消费层',
+        note: '结果面向谁',
+        color: '#2f4f8f',
+        groups: [
+          { name: '使用角色', items: ['数据开发', '数仓', 'SRE', '业务方', '管理者'] },
+          { name: '消费入口', items: ['观测门户', '值班大盘', '移动端告警', '开放 API'] }
+        ]
+      },
+      {
+        name: '观测应用层',
+        note: '可观测能力产品化',
+        color: '#2a6fd6',
+        groups: [
+          { name: '任务观测', items: ['作业运行态', '失败与重跑', '耗时趋势', '异常任务清单'] },
+          { name: '时效与 SLA', items: ['基线达成率', '产出延迟', '关键链路', '破线预警'] },
+          { name: '数据质量', items: ['完整性', '准确性', '一致性', '及时性'] },
+          { name: '资源与成本', items: ['队列 / 集群水位', '任务成本归因', '闲置与倾斜'] },
+          { name: '链路与影响', items: ['血缘拓扑', '影响面分析', '根因定位'] },
+          { name: '告警与应急', items: ['告警收敛', '分级通知', '预案联动', '复盘归档'] }
+        ]
+      },
+      {
+        name: '分析与计算层',
+        note: '从数据到结论',
+        color: '#158a8a',
+        groups: [
+          { name: '实时计算', items: ['流式聚合', '窗口统计', '实时指标'] },
+          { name: '离线计算', items: ['周期汇总', '历史回溯', '趋势建模'] },
+          { name: '基线与检测', items: ['动态基线', '同比 / 环比', '异常检测'] },
+          { name: '关联与归因', items: ['多维下钻', '事件关联', '血缘归因'] }
+        ]
+      },
+      {
+        name: '观测存储层',
+        note: '分类型落库',
+        color: '#6b4fbb',
+        groups: [
+          { name: '时序存储', items: ['运行指标', '资源指标'] },
+          { name: '日志存储', items: ['作业日志', '全文检索'] },
+          { name: '关系存储', items: ['血缘图', '依赖拓扑'] },
+          { name: '明细与汇总', items: ['观测数仓', 'OLAP 聚合'] },
+          { name: '元数据存储', items: ['任务台账', '表 / 字段元数据'] }
+        ]
+      },
+      {
+        name: '采集与接入层',
+        note: '统一观测数据模型',
+        color: '#b4762a',
+        groups: [
+          { name: '引擎事件采集', items: ['Spark EventLog', 'Flink Metrics', 'Hive / Trino 审计'] },
+          { name: '调度事件采集', items: ['任务状态', '依赖关系', '重跑记录'] },
+          { name: '资源指标拉取', items: ['YARN', 'K8s', '集群 / 队列'] },
+          { name: '日志采集', items: ['Agent', 'SDK 埋点', '日志管道'] },
+          { name: '元数据与血缘', items: ['Catalog 同步', 'SQL 解析', '字段级血缘'] },
+          { name: '统一建模', items: ['Schema 标准化', '实体对齐', '唯一标识'] }
+        ]
+      },
+      {
+        name: '观测对象层',
+        note: '被观测的大数据运行体',
+        color: '#5c6879',
+        groups: [
+          { name: '计算引擎', items: ['Spark', 'Flink', 'Hive', 'Trino / Presto'] },
+          { name: '存储', items: ['HDFS', '对象存储', 'Hudi / Iceberg', 'ClickHouse / Doris'] },
+          { name: '调度', items: ['工作流调度', '依赖编排', '补数与重跑'] },
+          { name: '资源', items: ['YARN', 'K8s', '队列 / 租户'] },
+          { name: '数据服务', items: ['数据 API', '指标服务', 'BI 查询'] }
+        ]
+      }
+    ],
+    legend: [
+      { color: '#2f4f8f', text: '消费' },
+      { color: '#2a6fd6', text: '观测应用' },
+      { color: '#158a8a', text: '分析计算' },
+      { color: '#6b4fbb', text: '观测存储' },
+      { color: '#b4762a', text: '采集接入' },
+      { color: '#5c6879', text: '观测对象' }
+    ]
+  }
+};
+
+const tabsEl = document.getElementById('tabs');
+const canvasEl = document.getElementById('canvas');
+const legendEl = document.getElementById('legend');
+const titleEl = document.getElementById('diagram-title');
+const descEl = document.getElementById('diagram-desc');
+const flowEl = document.getElementById('flow');
+
+function renderDiagram(key) {
+  const diagram = DIAGRAMS[key];
+  titleEl.textContent = diagram.title;
+  descEl.textContent = diagram.desc;
+  flowEl.textContent = diagram.flow;
+
+  legendEl.replaceChildren(...diagram.legend.map(item => {
+    const span = document.createElement('span');
+    const swatch = document.createElement('i');
+    swatch.style.background = item.color;
+    span.append(swatch, item.text);
+    return span;
+  }));
+
+  canvasEl.replaceChildren(...diagram.layers.map(layer => {
+    const section = document.createElement('section');
+    section.className = 'layer';
+
+    const label = document.createElement('div');
+    label.className = 'layer-label';
+    label.style.background = layer.color;
+    const name = document.createElement('b');
+    name.textContent = layer.name;
+    const note = document.createElement('small');
+    note.textContent = layer.note;
+    label.append(name, note);
+
+    const body = document.createElement('div');
+    body.className = 'layer-body';
+    layer.groups.forEach(group => {
+      const card = document.createElement('div');
+      card.className = 'group';
+      card.style.setProperty('--accent', layer.color);
+      const heading = document.createElement('h3');
+      heading.textContent = group.name;
+      const list = document.createElement('ul');
+      group.items.forEach(text => {
+        const li = document.createElement('li');
+        li.textContent = text;
+        list.appendChild(li);
+      });
+      card.append(heading, list);
+      body.appendChild(card);
+    });
+
+    section.append(label, body);
+    return section;
+  }));
+
+  Array.from(tabsEl.children).forEach(btn => {
+    btn.setAttribute('aria-selected', String(btn.dataset.key === key));
+  });
+}
+
+Object.entries(DIAGRAMS).forEach(([key, diagram]) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab';
+  btn.type = 'button';
+  btn.role = 'tab';
+  btn.dataset.key = key;
+  btn.textContent = diagram.tab;
+  btn.addEventListener('click', () => renderDiagram(key));
+  tabsEl.appendChild(btn);
+});
+
+renderDiagram('dfx');
+</script>
+</body>
+</html>
