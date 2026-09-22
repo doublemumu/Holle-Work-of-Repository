@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Multica 开源方案调研补充 · 同类开源项目对比看板</title>
+<style>
+  :root {
+    --bg: #f4f6fa;
+    --panel: #ffffff;
+    --ink: #1b2537;
+    --ink-sub: #5b6880;
+    --line: #dde3ed;
+    --shadow: 0 1px 2px rgba(27, 37, 55, .06), 0 8px 24px rgba(27, 37, 55, .06);
+    --strong: #1f8a5a;
+    --partial: #c98a12;
+    --weak: #c0453c;
+    --na: #98a3b6;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Noto Sans CJK SC", system-ui, sans-serif;
+    line-height: 1.6;
+  }
+
+  header {
+    background: linear-gradient(135deg, #16223c 0%, #24406e 100%);
+    color: #fff;
+    padding: 28px 32px 22px;
+  }
+
+  header h1 { margin: 0; font-size: 22px; letter-spacing: .5px; }
+
+  header p { margin: 6px 0 0; font-size: 13px; color: #b9c6dd; }
+
+  .tabs { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+
+  .tab {
+    border: 1px solid rgba(255, 255, 255, .28);
+    background: rgba(255, 255, 255, .08);
+    color: #dce5f5;
+    padding: 7px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .tab:hover { background: rgba(255, 255, 255, .16); }
+
+  .tab[aria-selected="true"] { background: #fff; color: #16223c; border-color: #fff; font-weight: 600; }
+
+  main { padding: 24px 32px 56px; max-width: 1560px; margin: 0 auto; }
+
+  .panel-head { margin-bottom: 16px; }
+  .panel-head h2 { margin: 0; font-size: 18px; }
+  .panel-head .desc { margin: 4px 0 0; font-size: 13px; color: var(--ink-sub); }
+
+  section[hidden] { display: none; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+
+  .card > h3 { margin: 0 0 10px; font-size: 15px; }
+
+  .note {
+    border-left: 3px solid #24406e;
+    background: #f7f9fd;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    color: var(--ink-sub);
+    margin-bottom: 18px;
+  }
+
+  .note b { color: var(--ink); }
+
+  /* ---- layer stack ---- */
+  .layer {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .layer-label {
+    padding: 16px 12px;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    text-align: center;
+  }
+
+  .layer-label b { font-size: 14px; font-weight: 600; }
+  .layer-label small { font-size: 11px; opacity: .85; line-height: 1.4; }
+
+  .layer-body {
+    padding: 14px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px;
+  }
+
+  .proj {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent, #98a3b6);
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #fcfdff;
+  }
+
+  .proj h4 { margin: 0 0 4px; font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .proj p { margin: 0; font-size: 12px; color: var(--ink-sub); }
+
+  .pill {
+    font-size: 10.5px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .pill.main { background: #e4f3ec; color: var(--strong); }
+  .pill.rival { background: #fdecea; color: var(--weak); }
+  .pill.compl { background: #eaf1fb; color: #2b5ba8; }
+  .pill.closed { background: #eef0f4; color: var(--na); }
+
+  /* ---- tables ---- */
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+
+  th, td {
+    border: 1px solid var(--line);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  thead th {
+    background: #eef2f9;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  tbody th { background: #f7f9fd; font-weight: 600; white-space: nowrap; }
+
+  .scroll { overflow-x: auto; }
+
+  td.score { text-align: center; font-weight: 600; white-space: nowrap; }
+  td.s3 { color: var(--strong); background: #f2faf6; }
+  td.s2 { color: var(--partial); background: #fdf8ec; }
+  td.s1 { color: var(--weak); background: #fdf1f0; }
+  td.s0 { color: var(--na); }
+  td.score small { display: block; font-weight: 400; font-size: 10.5px; color: var(--ink-sub); }
+
+  .col-focus { background: #f2f6fd; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-sub); margin-bottom: 12px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  /* ---- risk cards ---- */
+  .risks { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+
+  .risk {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--weak);
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .risk h4 { margin: 0 0 6px; font-size: 14px; }
+  .risk .lvl { font-size: 11px; color: var(--weak); font-weight: 600; }
+  .risk p { margin: 6px 0 0; font-size: 12.5px; color: var(--ink-sub); }
+  .risk p b { color: var(--ink); }
+
+  /* ---- recommendation stack ---- */
+  .stack { display: flex; flex-direction: column; gap: 8px; }
+
+  .stack-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 200px;
+    gap: 12px;
+    align-items: center;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: #fcfdff;
+    font-size: 13px;
+  }
+
+  .stack-row b { font-size: 13px; }
+  .stack-row .what { color: var(--ink-sub); font-size: 12.5px; }
+  .stack-row .own { font-size: 11.5px; font-weight: 600; text-align: right; }
+  .own.buy { color: var(--strong); }
+  .own.build { color: var(--weak); }
+
+  ul.tight { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; color: var(--ink-sub); }
+  ul.tight li { margin-bottom: 3px; }
+  ul.tight b { color: var(--ink); }
+
+  footer { padding: 0 32px 40px; max-width: 1560px; margin: 0 auto; font-size: 12px; color: var(--ink-sub); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Multica 开源方案调研补充 · 同类开源项目对比看板</h1>
+  <p>DFX-工程效能设计 / MultiAgent 协作专项 &nbsp;·&nbsp; 资料基准时间 2026-09 &nbsp;·&nbsp; 明细见同目录 multica-open-source-comparison.md</p>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-target="p-layers">分层全景</button>
+    <button class="tab" role="tab" aria-selected="false" data-target="p-matrix">能力矩阵</button>
+    <button class="tab" role="tab" aria-selected="false" data-target="p-scenario">同需求实现对比</button>
+    <button class="tab" role="tab" aria-selected="false" data-target="p-pros">优劣势总表</button>
+    <button class="tab" role="tab" aria-selected="false" data-target="p-plan">选型与风险</button>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ 分层全景 ============ -->
+<section id="p-layers" role="tabpanel">
+  <div class="panel-head">
+    <h2>分层全景：这些项目不在同一层</h2>
+    <p class="desc">调研中最容易出错的地方是把"都叫多智能体"的项目摆在一张表里直接比分。飞书智能体与 Hermes 都不是 Multica 的替代方案——前者在业务应用层不碰代码仓库，后者是被 Multica 驱动的执行器。</p>
+  </div>
+
+  <div class="note">
+    <b>关于需求基线：</b>本看板的评估维度由 DFX 工程效能 MultiAgent 协作的通用需求推导而来。撰写环境无法访问专项需求表（飞书链接需企业登录态），落库时请与表 <code>tbldJkKtocOnuMZF</code> 的实际字段做一次映射。
+  </div>
+
+  <div class="layer">
+    <div class="layer-label" style="background:#24406e">
+      <b>L4 协同层</b>
+      <small>人机混编工作管理<br/>谁做 · 做到哪 · 谁验收 · 花多少</small>
+    </div>
+    <div class="layer-body">
+      <div class="proj" style="--accent:#1f8a5a">
+        <h4>Multica <span class="pill main">推荐主线</span></h4>
+        <p>Issue 看板 + Agent 身份 + Squad 路由 + 评审门禁。Go + Next.js + PG17，控制面与执行面分离，26 个 Agent CLI。</p>
+      </div>
+      <div class="proj" style="--accent:#c0453c">
+        <h4>Vibe Kanban <span class="pill rival">同层竞品</span></h4>
+        <p>本地优先看板，每任务独立 git worktree，内置 diff 评审。Apache 2.0，单机单人。</p>
+      </div>
+      <div class="proj" style="--accent:#c0453c">
+        <h4>OpenHands Agent Canvas <span class="pill rival">同层竞品</span></h4>
+        <p>自托管控制中心 + Agent Server + SDK。容器沙箱是一等公民，企业治理最完整（但在商业授权后）。</p>
+      </div>
+      <div class="proj" style="--accent:#98a3b6">
+        <h4>GitHub Agent HQ <span class="pill closed">闭源基线</span></h4>
+        <p>Mission Control 跨仓库指派 Copilot / Claude / Codex，支持多 Agent 竞争同一 issue 择优合并。作为完备度参照。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer">
+    <div class="layer-label" style="background:#3a5c93">
+      <b>L3 应用层</b>
+      <small>企业智能体搭建<br/>面向业务角色 · 多渠道发布</small>
+    </div>
+    <div class="layer-body">
+      <div class="proj" style="--accent:#2b5ba8">
+        <h4>飞书 aily <span class="pill compl">分工使用</span></h4>
+        <p>闭源 SaaS。知识空间 + 连接器 + 可视化工作流，可操作飞书文档/多维表格/任务，支持定时主动工作。<b>不碰代码仓库</b>。</p>
+      </div>
+      <div class="proj" style="--accent:#2b5ba8">
+        <h4>Coze Studio <span class="pill compl">能力补位</span></h4>
+        <p>Apache 2.0，Go + React，全可视化拖拽。开源版不支持多租户/多空间。</p>
+      </div>
+      <div class="proj" style="--accent:#2b5ba8">
+        <h4>Dify <span class="pill compl">能力补位</span></h4>
+        <p>RAG + Workflow + 模型管理 + 观测一体。Workflow 可发布为 API / MCP Server，适合挂在 Agent 后面做知识服务。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer">
+    <div class="layer-label" style="background:#4e7ab5">
+      <b>L2 运行时层</b>
+      <small>单个 Agent 的循环<br/>工具调用 · 记忆 · 技能 · 子代理</small>
+    </div>
+    <div class="layer-body">
+      <div class="proj" style="--accent:#2b5ba8">
+        <h4>Hermes Agent <span class="pill compl">互补件</span></h4>
+        <p>Nous Research 自进化 Agent 运行时。<b>已是 Multica 内置的 26 个 CLI 之一</b>。跨会话记忆 + 技能自改写 + 多执行后端（Docker/SSH/Modal/Daytona）+ ACP。</p>
+      </div>
+      <div class="proj" style="--accent:#2b5ba8">
+        <h4>OpenClaw <span class="pill compl">范式参考</span></h4>
+        <p>同样是 Multica 支持的 CLI。确定性 bindings 路由 + A2A 白名单 + 轮次上限；飞书实践的"确定性控制面"值得直接借鉴。</p>
+      </div>
+      <div class="proj" style="--accent:#2b5ba8">
+        <h4>Claude Code / Codex / Cursor / 国产 CLI <span class="pill compl">执行器</span></h4>
+        <p>Kimi、Qwen、Trae、DeepSeek Harness、华为云 CodeArts 等均在 Multica 支持列表内，换供应商是下拉框不是迁移。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer">
+    <div class="layer-label" style="background:#6b8fc4">
+      <b>L1 编排层</b>
+      <small>代码编织多 Agent<br/>图 / 状态 / 断点恢复</small>
+    </div>
+    <div class="layer-body">
+      <div class="proj" style="--accent:#2b5ba8">
+        <h4>LangGraph <span class="pill compl">补 D2 首选</span></h4>
+        <p>有向图 + 类型化状态 + Postgres checkpointer + 原生 <code>interrupt()</code> HITL + 时间旅行调试。provider 无关、可内网。</p>
+      </div>
+      <div class="proj" style="--accent:#98a3b6">
+        <h4>CrewAI</h4>
+        <p>角色制 Crew，上手最快；持久执行与 HITL 是短板，关键链路常需迁移。</p>
+      </div>
+      <div class="proj" style="--accent:#98a3b6">
+        <h4>AutoGen / MAF</h4>
+        <p>AutoGen 已进入维护模式，新项目不建议采用。继任者 Microsoft Agent Framework 2026-04 GA，但生产护栏要走 Azure Foundry。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 能力矩阵 ============ -->
+<section id="p-matrix" role="tabpanel" hidden>
+  <div class="panel-head">
+    <h2>能力矩阵：12 个维度 × 9 个方案</h2>
+    <p class="desc">Multica 的强项集中在协同体验、生态中立与国内落地；唯一硬伤在执行隔离，且官方是明示不做、不是还没做。</p>
+  </div>
+
+  <div class="legend">
+    <span style="color:var(--strong)">● 强</span>
+    <span style="color:var(--partial)">◐ 部分</span>
+    <span style="color:var(--weak)">○ 弱或无</span>
+    <span style="color:var(--na)">— 不适用</span>
+    <span>没有任何单一方案拿满，组合是必然结论</span>
+  </div>
+
+  <div class="card scroll">
+    <table>
+      <thead>
+        <tr>
+          <th style="min-width:190px">维度</th>
+          <th class="col-focus">Multica</th>
+          <th>Vibe Kanban</th>
+          <th>OpenHands</th>
+          <th>Hermes</th>
+          <th>OpenClaw</th>
+          <th>飞书 aily</th>
+          <th>Dify / Coze</th>
+          <th>LangGraph</th>
+          <th>Agent HQ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>D1 任务承载与人机协同</th>
+          <td class="score s3 col-focus">●</td><td class="score s2">◐</td><td class="score s2">◐</td><td class="score s1">○</td><td class="score s1">○</td><td class="score s2">◐</td><td class="score s1">○</td><td class="score s1">○</td><td class="score s3">●</td>
+        </tr>
+        <tr>
+          <th>D2 多 Agent 编排</th>
+          <td class="score s2 col-focus">◐<small>仅路由</small></td><td class="score s1">○</td><td class="score s2">◐</td><td class="score s2">◐<small>子代理</small></td><td class="score s3">●<small>确定性路由</small></td><td class="score s2">◐</td><td class="score s3">●<small>工作流</small></td><td class="score s3">●</td><td class="score s2">◐</td>
+        </tr>
+        <tr>
+          <th>D3 执行运行时与隔离</th>
+          <td class="score s1 col-focus">○<small>官方无沙箱</small></td><td class="score s2">◐<small>worktree</small></td><td class="score s3">●<small>容器沙箱</small></td><td class="score s3">●<small>后端可插</small></td><td class="score s2">◐</td><td class="score s0">—</td><td class="score s0">—</td><td class="score s0">—</td><td class="score s3">●</td>
+        </tr>
+        <tr>
+          <th>D4 工具 / 模型中立性</th>
+          <td class="score s3 col-focus">●<small>26 CLI</small></td><td class="score s3">●</td><td class="score s3">●<small>ACP</small></td><td class="score s3">●<small>20+ provider</small></td><td class="score s3">●</td><td class="score s1">○</td><td class="score s3">●</td><td class="score s3">●</td><td class="score s2">◐<small>三家</small></td>
+        </tr>
+        <tr>
+          <th>D5 上下文与知识沉淀</th>
+          <td class="score s2 col-focus">◐<small>Skills</small></td><td class="score s1">○</td><td class="score s2">◐</td><td class="score s3">●<small>自进化技能</small></td><td class="score s2">◐</td><td class="score s3">●<small>知识空间</small></td><td class="score s3">●<small>RAG</small></td><td class="score s2">◐</td><td class="score s2">◐</td>
+        </tr>
+        <tr>
+          <th>D6 研发工具链集成</th>
+          <td class="score s3 col-focus">●<small>含自建 Git</small></td><td class="score s2">◐</td><td class="score s3">●</td><td class="score s2">◐</td><td class="score s1">○</td><td class="score s1">○</td><td class="score s1">○</td><td class="score s1">○</td><td class="score s3">●<small>仅 GitHub</small></td>
+        </tr>
+        <tr>
+          <th>D7 可观测与成本治理</th>
+          <td class="score s2 col-focus">◐<small>日志+token</small></td><td class="score s1">○</td><td class="score s3">●<small>预算强制</small></td><td class="score s1">○</td><td class="score s1">○</td><td class="score s2">◐</td><td class="score s3">●</td><td class="score s2">◐<small>LangSmith</small></td><td class="score s3">●</td>
+        </tr>
+        <tr>
+          <th>D8 权限 / 安全 / 合规</th>
+          <td class="score s2 col-focus">◐<small>无 SSO</small></td><td class="score s1">○</td><td class="score s3">●<small>SAML/审计</small></td><td class="score s1">○</td><td class="score s2">◐</td><td class="score s3">●</td><td class="score s2">◐</td><td class="score s1">○</td><td class="score s3">●</td>
+        </tr>
+        <tr>
+          <th>D9 私有化部署</th>
+          <td class="score s3 col-focus">●<small>Compose/Helm</small></td><td class="score s3">●</td><td class="score s2">◐<small>K8s 需授权</small></td><td class="score s3">●</td><td class="score s3">●</td><td class="score s1">○<small>不可私有化</small></td><td class="score s3">●</td><td class="score s3">●</td><td class="score s1">○</td>
+        </tr>
+        <tr>
+          <th>D10 许可与可持续性</th>
+          <td class="score s2 col-focus">◐<small>附加条款</small></td><td class="score s3">●<small>Apache 2.0</small></td><td class="score s2">◐<small>企业版闭源</small></td><td class="score s3">●</td><td class="score s3">●</td><td class="score s1">○</td><td class="score s3">●</td><td class="score s3">●<small>MIT</small></td><td class="score s1">○</td>
+        </tr>
+        <tr>
+          <th>D11 国内环境适配</th>
+          <td class="score s3 col-focus">●<small>飞书官方渠道</small></td><td class="score s1">○</td><td class="score s1">○</td><td class="score s1">○</td><td class="score s3">●<small>飞书深度</small></td><td class="score s3">●</td><td class="score s3">●</td><td class="score s2">◐</td><td class="score s1">○</td>
+        </tr>
+        <tr>
+          <th>D12 扩展与二次开发</th>
+          <td class="score s3 col-focus">●<small>CLI/API 全覆盖</small></td><td class="score s2">◐</td><td class="score s3">●<small>SDK</small></td><td class="score s2">◐<small>边界不清</small></td><td class="score s2">◐</td><td class="score s1">○</td><td class="score s3">●</td><td class="score s3">●</td><td class="score s1">○</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 场景对比 ============ -->
+<section id="p-scenario" role="tabpanel" hidden>
+  <div class="panel-head">
+    <h2>同一需求，不同实现路径</h2>
+    <p class="desc">把"看起来都能做"拆成"具体怎么落、要自建什么、会卡在哪"。</p>
+  </div>
+
+  <div class="card">
+    <h3>场景 A · 需求单 → Agent 实现 → PR → 人工评审合入</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th style="min-width:120px">方案</th><th>具体落法</th><th style="min-width:150px">需要自建</th><th style="min-width:200px">优</th><th style="min-width:200px">劣</th></tr></thead>
+        <tbody>
+          <tr class="col-focus"><th>Multica</th><td>建 Issue → 指派 Agent → daemon 拉取 → 本地 CLI 执行 → 边做边评论 → 落 in_review → 人评审 → PR 合入触发 done</td><td>Git 凭据的隔离账号</td><td>原生链路零开发；意图 / 执行 / 决策 / diff 挂在同一 Issue 下</td><td>执行无沙箱；PR 由 CLI 自己开，Multica 不介入 PR 门禁</td></tr>
+          <tr><th>Vibe Kanban</th><td>建卡 → 选 Agent → 自动开 worktree → 内置 diff 评审 → 合并</td><td>团队协同的一切</td><td>worktree 隔离干净，评审体验最好</td><td>单机单人，无法团队化</td></tr>
+          <tr><th>OpenHands</th><td>Canvas 起会话或 automation 派单 → 容器沙箱执行 → 产出 PR</td><td>Issue 层协同语义</td><td>沙箱隔离；企业版有审计与预算</td><td>无 Issue 看板心智，多人协作要自己贴</td></tr>
+          <tr><th>Hermes 单飞</th><td>CLI 或网关触发 → local / Docker / SSH 后端执行</td><td>Issue、指派、评审门禁全部自建</td><td>记忆与技能最强</td><td>等于自研一个 Multica</td></tr>
+          <tr><th>飞书 aily</th><td colspan="4" style="color:var(--na)">场景不成立 —— 不碰代码仓库，无 Git 集成、不产出 PR</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>场景 B · 多角色流水线（PM 拆解 → RD 实现 → QA 用例 → CR 复核）<span style="font-weight:400;font-size:12px;color:var(--ink-sub)"> —— 本专项的靶心，分歧最大</span></h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th style="min-width:150px">方案</th><th>具体落法</th><th style="min-width:80px">确定性</th><th style="min-width:190px">优</th><th style="min-width:210px">劣</th></tr></thead>
+        <tbody>
+          <tr class="col-focus"><th>Multica Squad</th><td>建 Squad（Leader + 前端/后端/测试 Agent）→ 指派 Issue → Leader 读 Roster 与 Instructions → <b>发一条 @ 评论派活</b> → 成员回帖 → Leader 被重新唤醒 → 决定下一步或推 in_review</td><td class="score s1">低<small>LLM 生成评论</small></td><td>零代码；人和 Agent 同队；有防自触发与去重</td><td>无法强制阶段顺序；无 barrier、无断点续跑；Leader 每轮消耗一次模型调用</td></tr>
+          <tr><th>OpenClaw / 飞书范式</th><td>声明式蓝图定义 teams + roleCatalog → 生成 agents/bindings → 控制面代码拆解并行分派 → 专家回交结构化 JSON → 按 publishOrder 顺序发布</td><td class="score s3">高<small>代码保障</small></td><td>顺序 / 状态 / 发布全可控；可灰度可回滚</td><td>产物是消息文档不是 PR；无 Git 集成；三处配置联动易错</td></tr>
+          <tr><th>LangGraph</th><td>四角色写成图节点，类型化状态流转，<code>interrupt()</code> 挂人工审批，Postgres checkpointer 持久化</td><td class="score s3">最高<small>图+恢复</small></td><td>可回放、可恢复、审批是一等公民</td><td>纯代码无 UI；要自己接执行器与 Git</td></tr>
+          <tr style="background:#f2faf6"><th>Multica + LangGraph<br/><span style="font-weight:400;font-size:11px;color:var(--strong)">推荐</span></th><td>Multica 承载 Issue 与人机界面，把多阶段流程委托给 LangGraph 服务（作为特殊 Agent 或 MCP 工具暴露）</td><td class="score s3">高</td><td>两边长处都拿到</td><td>需自建集成层，是本方案工作量最大的一块</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin:12px 0 0;font-size:12.5px;color:var(--ink-sub)"><b style="color:var(--ink)">结论：</b>Multica Squad 只能覆盖"路由"，覆盖不了"流程"。DFX 需求里若存在硬性阶段顺序或质量门禁（大概率存在），必须在 L1 层补确定性编排件。</p>
+  </div>
+
+  <div class="card">
+    <h3>场景 C · 定时巡检 / 质量报告</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th style="min-width:150px">方案</th><th>具体落法</th><th style="min-width:230px">优</th><th style="min-width:230px">劣</th></tr></thead>
+        <tbody>
+          <tr class="col-focus"><th>Multica Autopilots</th><td>cron 配置，跑站会汇总、代码审计、报告生成</td><td>原生无需开发；产物落在 Issue 里可追溯</td><td>大批量仓库时受 runtime 数量限制，并发需压测</td></tr>
+          <tr><th>OpenHands automation</th><td>独立 automation 组件负责调度、webhook、运行历史</td><td>调度能力更强；容器后端便于横向扩</td><td>报告落地位置要自己定</td></tr>
+          <tr><th>Hermes cron</th><td><code>/cron</code> 管理定时任务，复用同一 Agent 核心</td><td>轻量</td><td>单机视角，无团队级汇总</td></tr>
+          <tr><th>飞书 aily 定时任务</th><td>定时主动工作，直接操作飞书文档 / 多维表格</td><td><b>报告直接落到飞书表格</b>，不可替代</td><td>不能读代码仓库</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin:12px 0 0;font-size:12.5px;color:var(--ink-sub)"><b style="color:var(--ink)">结论：</b>混合最优 —— 代码侧巡检用 Multica Autopilots 并经飞书渠道推送，报表维护用 aily 定时任务。</p>
+  </div>
+
+  <div class="card">
+    <h3>场景 D · 跨仓库大规模重构（同一改动 × N 个仓库）</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th style="min-width:150px">方案</th><th style="min-width:80px">可行性</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr class="col-focus"><th>Multica</th><td class="score s2">◐</td><td>可批量建单批量指派，但没有"母任务 fan-out 到 N 仓再汇总"的原语；并发受 runtime 数量约束；失败重试是 Run 级不是批次级 —— <b>这是 Multica 的第二个能力缺口</b></td></tr>
+          <tr><th>Vibe Kanban</th><td class="score s1">○</td><td>单机 worktree，规模上不去</td></tr>
+          <tr><th>OpenHands</th><td class="score s3">●</td><td>Agent Server + 容器后端天然横向扩，automation 可编排批次</td></tr>
+          <tr><th>LangGraph 自建</th><td class="score s3">●</td><td>fan-out / fan-in 是图的基本能力，失败重试与断点恢复原生</td></tr>
+          <tr><th>Agent HQ</th><td class="score s3">●</td><td>Mission Control 支持跨仓库批量指派</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>场景 E · 飞书群内触发与进度同步</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th style="min-width:150px">方案</th><th>具体落法</th><th style="min-width:230px">优</th><th style="min-width:200px">劣</th></tr></thead>
+        <tbody>
+          <tr class="col-focus"><th>Multica Lark 渠道</th><td>群内触发和跟进 Agent 工作</td><td><b>官方维护</b>（区别于社区维护的钉钉 / 企微 / Telegram）；与 Issue 时间线打通</td><td>交互深度未知，需 POC 验证（能否群内看 diff、做审批）</td></tr>
+          <tr><th>飞书 OpenClaw</th><td>每群一个"主管 + 专家"团队，A2A 协作，控制面顺序发布</td><td>群内体验最好，非研发角色可直接参与</td><td>与代码仓库脱节</td></tr>
+          <tr><th>飞书 aily 自定义智能体</th><td>一键加入群，可操作文档 / 表格 / 任务</td><td>与飞书协同套件深度打通</td><td>闭源，不碰代码</td></tr>
+          <tr><th>自建 Webhook</th><td>监听 Multica 事件推飞书</td><td>完全可控</td><td>要自己做</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 优劣势总表 ============ -->
+<section id="p-pros" role="tabpanel" hidden>
+  <div class="panel-head">
+    <h2>优劣势总表</h2>
+    <p class="desc">每个方案在本专项语境下的核心优势、核心劣势、主要风险与处置建议。</p>
+  </div>
+
+  <div class="card scroll">
+    <table>
+      <thead>
+        <tr><th style="min-width:130px">方案</th><th>核心优势</th><th>核心劣势</th><th style="min-width:190px">主要风险</th><th style="min-width:150px">建议</th></tr>
+      </thead>
+      <tbody>
+        <tr class="col-focus">
+          <th>Multica</th>
+          <td>人机混编协同心智最顺；26 CLI 厂商中立含国产；自建 Git 全支持；飞书官方渠道；Compose / Helm 自部署；CLI 与 API 全可脚本化</td>
+          <td>官方明示无文件系统沙箱；Squad 只路由不编排；无 SSO；无预算熔断；跨仓库批量原语缺失</td>
+          <td>License 附加条款（白标需豁免、producer 可单方收紧）；项目仅 8 个月，main 快速移动</td>
+          <td><b style="color:var(--strong)">主线采用</b>，锁版本，隔离层与编排层自建</td>
+        </tr>
+        <tr><th>Vibe Kanban</th><td>零部署；worktree 隔离干净；diff 评审体验最好</td><td>单机单人；无团队 / 角色 / 渠道 / 成本</td><td>无</td><td>个人试点工具，不入平台</td></tr>
+        <tr><th>OpenHands</th><td>容器沙箱一等公民；企业治理最完整（SAML / 审计 / 预算强制）；SDK 化程度最高</td><td>企业能力在商业授权后；协同心智弱；部署重；国内适配弱</td><td>开源版定位单用户，与商业版能力落差大</td><td>备选路线，或作为受控执行后端与 Multica 共存</td></tr>
+        <tr><th>Hermes Agent</th><td>自进化技能与跨会话记忆最强；执行后端可插拔；ACP 支持</td><td>单 Agent 视角；无协同 / 治理；仓库边界不清</td><td>二开时稳定面难判断</td><td>作为 Multica 的执行器之一接入，用于长期维护类任务</td></tr>
+        <tr><th>OpenClaw / 飞书多智能体</th><td>确定性路由与顺序发布；A2A 有白名单与轮次上限；飞书群原生</td><td>不产出 PR；无 Git 集成；默认会话可见性过宽（可跨 Agent 读到他人对话）</td><td>社区实践非官方承诺</td><td>借鉴其编排范式；非研发场景可直接用</td></tr>
+        <tr><th>飞书 aily</th><td>飞书生态深度打通；管理员统一管控；非技术角色可用；效果调优链路完整</td><td>闭源不可私有化；不碰代码仓库</td><td>无法审计、无法二开</td><td>分工使用：承载文档 / 表格 / 流程类效能智能体</td></tr>
+        <tr><th>Dify / Coze Studio</th><td>RAG 与工作流编排能力强；Apache 2.0 无附加条款</td><td>不面向"真实仓库上干活"的编码 Agent</td><td>Coze 开源版无多租户</td><td>作为知识 / RAG 补位，经 MCP 挂给 Multica 的 Agent</td></tr>
+        <tr><th>LangGraph</th><td>确定性图编排 + checkpoint + 原生 HITL + 时间旅行；provider 无关可内网</td><td>纯代码无 UI；周边全要自装配</td><td>无</td><td><b style="color:var(--strong)">补 D2 缺口的首选</b></td></tr>
+        <tr><th>GitHub Agent HQ</th><td>与 GitHub 原生零摩擦；治理完整；支持多 Agent 竞争择优</td><td>闭源 SaaS；绑定 Copilot 套餐；无法内网；无国产 CLI</td><td>国内可用性与合规</td><td>作为完备度参照基线，不采用</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 选型与风险 ============ -->
+<section id="p-plan" role="tabpanel" hidden>
+  <div class="panel-head">
+    <h2>选型建议与风险登记</h2>
+    <p class="desc">一句话结论：Multica 是"人机混编任务协同层"里完成度最高、也最贴合国内工程团队习惯的开源方案，建议作为主线；但它不是编排引擎、也不提供沙箱，这两块必须从别处补。</p>
+  </div>
+
+  <div class="card">
+    <h3>推荐组合架构</h3>
+    <div class="stack">
+      <div class="stack-row"><b>触达层</b><span class="what">飞书群 / IM —— 触发任务、同步进展（Multica 的 Lark 渠道为官方维护）</span><span class="own buy">用开源</span></div>
+      <div class="stack-row"><b>协同层</b><span class="what">Multica 自部署 —— Issue 看板、Agent 身份、Squad 路由、评审门禁、执行日志、token 归集</span><span class="own buy">用开源</span></div>
+      <div class="stack-row"><b>编排层</b><span class="what">LangGraph 服务 —— 确定性阶段流程、人工审批节点、断点恢复（经 MCP 暴露给 Multica）</span><span class="own build">自建</span></div>
+      <div class="stack-row"><b>执行层</b><span class="what">Claude Code / Codex / Hermes / 国产 CLI —— 真正写代码的那一环</span><span class="own buy">用开源</span></div>
+      <div class="stack-row"><b>隔离层</b><span class="what">专用 Unix 用户 + 容器 / VM —— Multica 明示不提供，必须自己加</span><span class="own build">自建</span></div>
+      <div class="stack-row"><b>治理层</b><span class="what">成本归集 / 预算熔断 / 效能指标 / 审计 —— Multica 只给原料，不给报表</span><span class="own build">自建</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>为什么是 Multica</h3>
+    <ul class="tight">
+      <li><b>为什么不是 OpenHands：</b>本专项第一性需求是"人和 Agent 在同一套工程流程里协作"（D1）。Multica 在 D1 以及 D4 / D6 / D9 / D11 上的完成度是 OpenHands 开源版给不了的；OpenHands 强在 D3 / D7 / D8，但那些能力在商业授权闸门后——一旦付费，"开源方案"的评估前提就不成立了。</li>
+      <li><b>为什么不自研：</b>Multica 已解决的部分（26 个 CLI 的持续适配、daemon / runtime 模型、Issue-Run-Comment 数据模型、桌面与移动端、四种 Git 托管集成）自研成本极高且需长期投入，而这些都不是我们的差异化。工程投入应放在它明确不做的两件事上：<b>隔离</b>与<b>确定性编排</b>。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>分阶段落地（按能力递进）</h3>
+    <ul class="tight">
+      <li><b>阶段一 · 可用性验证：</b>自部署 Multica（Compose，锁版本）+ 专用 Unix 用户隔离 + 接入两个 Agent CLI（一国际一国产）+ 打通一个自建 GitLab 仓库。<i>验收：场景 A 端到端跑通，Issue 里能完整看到意图、执行日志、diff。</i></li>
+      <li><b>阶段二 · 边界收敛：</b>daemon 迁入容器，凭据收敛到 per-purpose deploy key，接通飞书渠道，上线首个 Autopilot 巡检。<i>验收：一次刻意跑飞的 Run 无法读到容器外任何凭据。</i></li>
+      <li><b>阶段三 · 编排补位：</b>引入 LangGraph 编排服务，实现一条硬门禁流水线。<i>验收：流程顺序在代码层被强制，不依赖 Prompt。</i></li>
+      <li><b>阶段四 · 治理闭环：</b>成本归集与预算告警、效能指标看板、批次调度器。<i>验收：能回答"上月 DFX Agent 花了多少钱、采纳率多少、返工率多少"。</i></li>
+    </ul>
+  </div>
+
+  <div class="panel-head" style="margin-top:24px">
+    <h2 style="font-size:16px">风险登记</h2>
+  </div>
+
+  <div class="risks">
+    <div class="risk">
+      <span class="lvl">高</span>
+      <h4>R1 · License 不是标准 Apache 2.0</h4>
+      <p><b>事实：</b><code>LICENSE</code> 为 Multica License = Apache 2.0 正文 + Part I 附加条款。禁止未获商业授权时向组织外第三方提供托管服务；禁止未获书面豁免时移除 UI 上的 Logo / 产品名 / 版权信息；条款 2.a 写明 producer 可单方把许可调整得更严格。<b>多份第三方资料把它写成 MIT 或 Apache 2.0，是错的。</b></p>
+      <p><b>处置：</b>内部单组织使用明确允许；白标进公司平台需书面申请 branding waiver。保留 fork，定期 review LICENSE 变更。</p>
+    </div>
+    <div class="risk">
+      <span class="lvl">高</span>
+      <h4>R2 · 官方明示不提供文件系统沙箱</h4>
+      <p><b>事实：</b>官方 Security model 原文 <code>Multica makes no filesystem-sandbox guarantee</code>；默认以 Codex <code>danger-full-access</code> / Claude Code <code>bypassPermissions</code> 运行，Run 继承 daemon 用户完整权限与 <code>HOME</code>，可读 SSH key、用云 CLI 凭据、无限制出网。每 Run 独立工作目录与 Run 级 Token 被官方定性为"降低爆炸半径的便利功能，不是安全边界"。</p>
+      <p><b>处置：</b>按官方推荐由轻到重三选一：专用 <code>multica</code> Unix 用户 → 容器（只挂必需目录与 secret）→ VM。凭据用 per-purpose deploy key，daemon 用户 home 内不放任何生产凭据。</p>
+    </div>
+    <div class="risk">
+      <span class="lvl">中高</span>
+      <h4>R3 · Squad 是路由不是编排</h4>
+      <p><b>事实：</b>Leader 通过发一条 @ 提及的评论派活，成员回帖后被重新唤醒；没有 DAG、没有状态机、没有断点续跑。硬约束只能写进 Squad Instructions 里"劝"。</p>
+      <p><b>处置：</b>L1 层补 LangGraph 编排；关键质量门禁放在 CI 而非 Agent 内。</p>
+    </div>
+    <div class="risk">
+      <span class="lvl">中</span>
+      <h4>R4 · 项目年轻，main 快速移动</h4>
+      <p><b>事实：</b>仓库 2026-01 创建，官方称"大部分工作日都发版"，1300+ open issues。</p>
+      <p><b>处置：</b>锁定发版版本 + 镜像入内部仓 + 升级前回归 + 明确回滚预案。</p>
+    </div>
+    <div class="risk">
+      <span class="lvl">中</span>
+      <h4>R5 · 无 SSO、无预算熔断</h4>
+      <p><b>处置：</b>网关层做身份代理；在 LLM 网关（LiteLLM 或内部网关）层做成本硬约束。</p>
+    </div>
+    <div class="risk">
+      <span class="lvl">中</span>
+      <h4>R6 · 跨仓库批量能力缺失</h4>
+      <p><b>处置：</b>基于 Multica CLI / API 自建批次调度器，或把这类任务路由到独立流水线。</p>
+    </div>
+    <div class="risk">
+      <span class="lvl">中</span>
+      <h4>R7 · 国产 CLI 实际能力差距未知</h4>
+      <p><b>处置：</b>实测 Kimi / Qwen / Trae / CodeArts 与 Claude Code 的任务成功率差距，按任务类型分流 Agent。</p>
+    </div>
+    <div class="risk">
+      <span class="lvl">低</span>
+      <h4>R8 · 社区维护渠道质量不可控</h4>
+      <p><b>事实：</b>钉钉 / 企微 / Telegram 渠道为社区维护，仅 Slack 与 Lark 为官方维护。</p>
+      <p><b>处置：</b>只用官方维护的 Lark 渠道，其余走自建 Webhook。</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  完整明细（含每个项目的架构事实、POC 验证清单 10 项、参考资料出处）见同目录 <code>multica-open-source-comparison.md</code>。
+</footer>
+
+<script>
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => {
+        const panel = document.getElementById(t.dataset.target);
+        const selected = t === tab;
+        t.setAttribute('aria-selected', String(selected));
+        panel.hidden = !selected;
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+</script>
+
+</body>
+</html>
